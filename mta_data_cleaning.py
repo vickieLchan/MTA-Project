@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 import datetime as dt
 from datetime import datetime
+import seaborn as sns
 
 #=================================================================================================
 # GET RAW DATA
@@ -78,4 +80,48 @@ turnstiles_reg.head()
                                                         .transform(lambda grp: grp.shift(1)))
  turnstiles_reg.head(20)
 
- turnstiles_reg.to_csv(working_directory+'turnstile_shifted_all_desc.csv', index=False)
+ turnstiles_reg.to_csv(working_directory+'turnstile_shifted_all_asc.csv', index=False)
+#=================================================================================================
+# Read in dataset with shifted entries and exits
+turn_shifted = pd.read_csv(working_directory+'turnstile_shifted_all_asc.csv', parse_dates=['date', 'date_time'])
+turn_shifted.head(10)
+print(len(turn_shifted))
+
+# remove null prev_entries/prev_exits because they will not give us a count for that timestamp
+turn_shifted = turn_shifted[turn_shifted.prev_entries.notnull()]
+print(len(turn_shifted))
+
+def get_counts_per_timestamp(row, max_counter, col1, col2):
+    counter = row[col1] - row[col2]
+    if counter < 0:
+        counter = -counter
+    if counter > max_counter:
+        return 0
+    return counter
+
+turn_shifted['entries_per_timestamp'] = turn_shifted.apply(get_counts_per_timestamp, \
+                                max_counter=1000000, col1='entries', col2='prev_entries', axis=1)
+turn_shifted['exits_per_timestamp'] = turn_shifted.apply(get_counts_per_timestamp, \
+                                max_counter=1000000, col1='exits', col2='prev_exits', axis=1)
+
+turn_shifted.head()
+
+turn_shifted.describe()
+# What is the deal with 0 entries and 0 exits? Counter resetting?
+
+# Need decision: what to do with these cols?
+print(len(turn_shifted[turn_shifted.entries == 0]))
+print(len(turn_shifted[turn_shifted.exits == 0]))
+# Number of records we'd have if we exclude times when entries and exits = 0
+mask = ((turn_shifted.entries != 0) &
+        (turn_shifted.exits != 0))
+print(len(turn_shifted[mask]))
+
+turn_shifted[turn_shifted.exits == 0].head(10)
+
+turn_shifted.entries_per_timestamp.max()
+turn_shifted.exits_per_timestamp.max()
+
+turn_cleaned = turn_shifted.drop(columns=['prev_date', 'prev_entries', 'prev_exits'])
+turn_cleaned.to_csv(working_directory+'turnstiles_cleaned.csv', index=False)
+#=================================================================================================
