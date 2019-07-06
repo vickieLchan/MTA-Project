@@ -201,7 +201,8 @@ income_stations.station.unique()
 def add_th(s):
     if any(i in s for i in '0123456789'):
         # for char in s:
-
+# go through everything and see where there's a match, work downwards
+# split data up
     # if i == '1':
     #     suffix = 'ST'
     # elif i == '2':
