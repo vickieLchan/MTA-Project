@@ -79,8 +79,21 @@ sns.lineplot(data=turnstiles_daily_1d, x='time', \
   y='entries_and_exits_timestamp');
 
 # aggregated turnstile data
-daily_entries_exits = pd.DataFrame(turnstiles_daily.agg({'entries_and_exits_timestamp': 'median'})).reset_index()
+# daily_entries_exits = pd.DataFrame(turnstiles_daily.agg({'entries_and_exits_timestamp': 'median'})).reset_index()
 
+top_5 = ['34 ST-PENN STA', 'TIMES SQ-42 ST', '42 ST-PORT AUTH', '86 ST', '34 ST-HERALD SQ']
+top_5_sta_only = turn_cleaned[(turn_cleaned.station.isin(top_5)) & (turn_cleaned.date>datetime(2019,1,1,0,0,0))]
+len(top_5_sta_only)
+
+t5_one_day = ("A021", "R032", "01-00-00", "TIMES SQ-42 ST", datetime(2019,5,7,0,0,0)) # 5/3, 5/6
+
+t5_turn_daily = top_5_sta_only.groupby(["c/a", "unit", "scp","station", "date"])
+t5_turnstiles_daily_1d = turnstiles_daily.get_group(t5_one_day)
+
+sns.lineplot(data=t5_turnstiles_daily_1d, x='time', \
+  y='entries_per_timestamp');
+
+top_5_sta_only.head()
 #====================================================================================
 # CHALLEGE 8
 turn_cleaned['week'] = turn_cleaned.date.dt.to_period("W").astype(str)
